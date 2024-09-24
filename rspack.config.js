@@ -1,11 +1,14 @@
 /* global __dirname */
 
-const CircularDependencyPlugin = require('circular-dependency-plugin');
+// const CircularDependencyPlugin = require('circular-dependency-plugin');
+const rspack = require('@rspack/core');
 const fs = require('fs');
 const { join, resolve } = require('path');
 const process = require('process');
-const webpack = require('webpack');
-const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+// const webpack = require('webpack');
+
+
+// const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 
 /**
  * The URL of the Jitsi Meet deployment to be proxy to in the context of
@@ -42,15 +45,17 @@ function getPerformanceHints(options, size) {
  * @returns {Array} a configured list of plugins.
  */
 function getBundleAnalyzerPlugin(analyzeBundle, name) {
-    if (!analyzeBundle) {
-        return [];
-    }
+    return [];
 
-    return [ new BundleAnalyzerPlugin({
-        analyzerMode: 'disabled',
-        generateStatsFile: true,
-        statsFilename: `${name}-stats.json`
-    }) ];
+    // if (!analyzeBundle) {
+    //     return [];
+    // }
+
+    // return [ new BundleAnalyzerPlugin({
+    //     analyzerMode: 'disabled',
+    //     generateStatsFile: true,
+    //     statsFilename: `${name}-stats.json`
+    // }) ];
 }
 
 /**
@@ -101,43 +106,36 @@ function getConfig(options = {}) {
         mode: isProduction ? 'production' : 'development',
         module: {
             rules: [ {
-                // Transpile ES2015 (aka ES6) to ES5. Accept the JSX syntax by React
-                // as well.
-
-                loader: 'babel-loader',
+                loader: 'builtin:swc-loader',
                 options: {
-                    // Avoid loading babel.config.js, since we only use it for React Native.
-                    configFile: false,
-
-                    // XXX The require.resolve below solves failures to locate the
-                    // presets when lib-jitsi-meet, for example, is npm linked in
-                    // jitsi-meet.
-                    plugins: [
-                        require.resolve('@babel/plugin-proposal-export-default-from')
-                    ],
-                    presets: [
-                        [
-                            require.resolve('@babel/preset-env'),
-
-                            // Tell babel to avoid compiling imports into CommonJS
-                            // so that webpack may do tree shaking.
-                            {
-                                modules: false,
-
-                                // Specify our target browsers so no transpiling is
-                                // done unnecessarily. For browsers not specified
-                                // here, the ES2015+ profile will be used.
-                                targets: {
-                                    chrome: 80,
-                                    electron: 10,
-                                    firefox: 68,
-                                    safari: 14
-                                }
-
+                    jsc: {
+                        parser: {
+                            syntax: 'ecmascript',
+                            jsx: true,
+                            dynamicImport: true,
+                            exportDefaultFrom: true, // Enable 'export default from' syntax
+                        },
+                        transform: {
+                            react: {
+                                runtime: 'classic', // Use 'classic' runtime to match Babel's default
+                                pragma: 'React.createElement',
+                                pragmaFrag: 'React.Fragment',
+                                throwIfNamespace: true,
+                                development: false,
+                                useBuiltIns: false
                             }
-                        ],
-                        require.resolve('@babel/preset-react')
-                    ]
+                        }
+                        // target: 'es5' // Transpile down to ES5
+                    },
+                    env: {
+                        targets: {
+                            chrome: '80',
+                            electron: '10',
+                            firefox: '68',
+                            safari: '14'
+                        }
+                    }
+                    // module: false // Avoid transforming ES modules to another format
                 },
                 test: /\.jsx?$/
             }, {
@@ -160,12 +158,39 @@ function getConfig(options = {}) {
             }, {
                 test: /\.tsx?$/,
                 exclude: /node_modules/,
-                loader: 'ts-loader',
-                options: {
-                    configFile: 'tsconfig.web.json',
-                    transpileOnly: !isProduction // Skip type checking for dev builds.,
-                }
-            } ]
+                use: {
+                  loader: 'builtin:swc-loader',
+                  options: {
+                    jsc: {
+                      parser: {
+                        syntax: 'typescript',
+                        tsx: true,                // Enable if using TSX (React)
+                        decorators: true,         // Enable if using decorators
+                        dynamicImport: true,      // Enable dynamic import syntax
+                      },
+                      transform: {
+                        react: {
+                          runtime: 'automatic',    // Use 'classic' if not using React 17+
+                          // Add other React-specific options if needed
+                        },
+                      },
+                    //   target: 'es2015',            // Set your desired ECMAScript target
+                    },
+                    // You can include environment-specific configurations if needed
+                    env: {
+                      targets: {
+                        chrome: '80',
+                        electron: '10',
+                        firefox: '68',
+                        safari: '14',
+                      },
+                    },
+                    module: {
+                      type: 'es6',                // Preserve ES6 module syntax for tree shaking
+                    },
+                    // Optionally, specify a .swcrc file by omitting the options here
+                    // and creating a .swcrc file in your project root
+                  },},} ]
         },
         node: {
             // Allow the use of the real filename of the module being executed. By
@@ -183,14 +208,7 @@ function getConfig(options = {}) {
             publicPath: '/libs/',
             sourceMapFilename: '[file].map'
         },
-        plugins: [
-            detectCircularDeps
-                && new CircularDependencyPlugin({
-                    allowAsyncCycles: false,
-                    exclude: /node_modules/,
-                    failOnError: false
-                })
-        ].filter(Boolean),
+        plugins: [],
         resolve: {
             alias: {
                 'focus-visible': 'focus-visible/dist/focus-visible.min.js'
@@ -280,15 +298,15 @@ module.exports = (_env, argv) => {
             plugins: [
                 ...config.plugins,
                 ...getBundleAnalyzerPlugin(analyzeBundle, 'app'),
-                new webpack.IgnorePlugin({
+                new rspack.IgnorePlugin({
                     resourceRegExp: /^canvas$/,
                     contextRegExp: /resemblejs$/
                 }),
-                new webpack.IgnorePlugin({
+                new rspack.IgnorePlugin({
                     resourceRegExp: /^\.\/locale$/,
                     contextRegExp: /moment$/
                 }),
-                new webpack.ProvidePlugin({
+                new rspack.ProvidePlugin({
                     process: 'process/browser'
                 })
             ],

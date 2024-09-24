@@ -20,8 +20,8 @@ ifeq ($(OS),Windows_NT)
 	WEBPACK = .\node_modules\.bin\webpack
 	WEBPACK_DEV_SERVER = .\node_modules\.bin\webpack serve --mode development
 else
-	WEBPACK = ./node_modules/.bin/webpack
-	WEBPACK_DEV_SERVER = ./node_modules/.bin/webpack serve --mode development
+	WEBPACK = ./node_modules/.bin/rspack
+	WEBPACK_DEV_SERVER = ./node_modules/.bin/rspack serve --mode development
 endif
 
 all: compile deploy
