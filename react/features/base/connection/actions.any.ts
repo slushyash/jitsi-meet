@@ -124,7 +124,9 @@ export function constructOptions(state: IReduxState) {
     }
 
     const { bosh, preferBosh, flags } = options;
-    let { websocket } = options;
+    let websocket = params['config.websocket'] || options.websocket;
+    const conferenceRequestUrl = params['config.conferenceRequestUrl'] || options.conferenceRequestUrl;
+    const websocketKeepAliveUrl = params['config.websocketKeepAliveUrl'] || options.websocketKeepAliveUrl;
 
     if (preferBosh) {
         websocket = undefined;
@@ -143,11 +145,11 @@ export function constructOptions(state: IReduxState) {
 
         options.serviceUrl = appendURLParam(serviceUrl, 'room', roomName ?? '');
 
-        if (options.websocketKeepAliveUrl) {
-            options.websocketKeepAliveUrl = appendURLParam(options.websocketKeepAliveUrl, 'room', roomName ?? '');
+        if (websocketKeepAliveUrl) {
+            options.websocketKeepAliveUrl = appendURLParam(websocketKeepAliveUrl, 'room', roomName ?? '');
         }
-        if (options.conferenceRequestUrl) {
-            options.conferenceRequestUrl = appendURLParam(options.conferenceRequestUrl, 'room', roomName ?? '');
+        if (conferenceRequestUrl) {
+            options.conferenceRequestUrl = appendURLParam(conferenceRequestUrl, 'room', roomName ?? '');
         }
     }
 
@@ -165,6 +167,13 @@ export function constructOptions(state: IReduxState) {
         };
     }
 
+    options.sso = {
+        'ssoService': 'sso.8x8.com',
+        'tokenService': 'api-vo.cloudflare.jitsi.net',
+        'clientId': 'meetings_web_sso'
+    };
+
+    options.websocketKeepAliveUrl = 'https://8x8.vc/vpaas-magic-cookie-06c2dc1fca26493997b0d2a00b9f3109/_unlock?room=7555df76-3862-4003-9b2c-941196b2b764';
     return options;
 }
 
