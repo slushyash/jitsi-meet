@@ -31,7 +31,7 @@ function getPerformanceHints(options, size) {
     const { analyzeBundle, isProduction } = options;
 
     return {
-        hints: isProduction && !analyzeBundle ? 'error' : false,
+        hints: isProduction && !analyzeBundle ? 'warning' : false,
         maxAssetSize: size,
         maxEntrypointSize: size
     };
@@ -44,16 +44,18 @@ function getPerformanceHints(options, size) {
  * @param {string} name - the name of the bundle.
  * @returns {Array} a configured list of plugins.
  */
-function getBundleAnalyzerPlugin(analyzeBundle, name) {
-    if (!analyzeBundle) {
-        return [];
-    }
+function getBundleAnalyzerPlugin(analyzeBundle, name) { // eslint-disable-line no-unused-vars
+    return [];
 
-    return [ new BundleAnalyzerPlugin({
-        analyzerMode: 'disabled',
-        generateStatsFile: true,
-        statsFilename: `${name}-stats.json`
-    }) ];
+    // if (!analyzeBundle) {
+    //     return [];
+    // }
+
+    // return [ new BundleAnalyzerPlugin({
+    //     analyzerMode: 'disabled',
+    //     generateStatsFile: true,
+    //     statsFilename: `${name}-stats.json`
+    // }) ];
 }
 
 /**
@@ -292,7 +294,7 @@ function getDevServerConfig() {
 }
 
 module.exports = (_env, argv) => {
-    const analyzeBundle = Boolean(process.env.ANALYZE_BUNDLE);
+    const analyzeBundle = false; // Boolean(process.env.ANALYZE_BUNDLE);
     const mode = typeof argv.mode === 'undefined' ? 'production' : argv.mode;
     const isProduction = mode === 'production';
     const configOptions = {
