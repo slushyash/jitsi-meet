@@ -1,14 +1,9 @@
 /* global __dirname */
 
-const CircularDependencyPlugin = require('circular-dependency-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
+const rspack = require('@rspack/core');
 const fs = require('fs');
 const { join, resolve } = require('path');
 const process = require('process');
-const SSICompileWebpackPlugin = require('ssi-webpack5-plugin');
-const webpack = require('webpack');
-const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-
 
 /**
  * The URL of the Jitsi Meet deployment to be proxy to in the context of
@@ -106,43 +101,37 @@ function getConfig(options = {}) {
         mode: isProduction ? 'production' : 'development',
         module: {
             rules: [ {
-                // Transpile ES2015 (aka ES6) to ES5. Accept the JSX syntax by React
-                // as well.
-
-                loader: 'babel-loader',
+                loader: 'builtin:swc-loader',
                 options: {
-                    // Avoid loading babel.config.js, since we only use it for React Native.
-                    configFile: false,
-
-                    // XXX The require.resolve below solves failures to locate the
-                    // presets when lib-jitsi-meet, for example, is npm linked in
-                    // jitsi-meet.
-                    plugins: [
-                        require.resolve('@babel/plugin-proposal-export-default-from')
-                    ],
-                    presets: [
-                        [
-                            require.resolve('@babel/preset-env'),
-
-                            // Tell babel to avoid compiling imports into CommonJS
-                            // so that webpack may do tree shaking.
-                            {
-                                modules: false,
-
-                                // Specify our target browsers so no transpiling is
-                                // done unnecessarily. For browsers not specified
-                                // here, the ES2015+ profile will be used.
-                                targets: {
-                                    chrome: 80,
-                                    electron: 10,
-                                    firefox: 68,
-                                    safari: 14
-                                }
-
+                    jsc: {
+                        parser: {
+                            syntax: 'ecmascript',
+                            jsx: true,
+                            dynamicImport: true,
+                            exportDefaultFrom: true // Enable 'export default from' syntax
+                        },
+                        transform: {
+                            react: {
+                                runtime: 'classic', // Use 'classic' runtime to match Babel's default
+                                pragma: 'React.createElement',
+                                pragmaFrag: 'React.Fragment',
+                                throwIfNamespace: true,
+                                development: false,
+                                useBuiltIns: false
                             }
-                        ],
-                        require.resolve('@babel/preset-react')
-                    ]
+                        }
+
+                        // target: 'es5' // Transpile down to ES5
+                    },
+                    env: {
+                        targets: {
+                            chrome: '120',
+                            firefox: '120',
+                            safari: '17'
+                        }
+                    }
+
+                    // module: false // Avoid transforming ES modules to another format
                 },
                 test: /\.jsx?$/
             }, {
@@ -165,24 +154,41 @@ function getConfig(options = {}) {
             }, {
                 test: /\.tsx?$/,
                 exclude: /node_modules/,
-                loader: 'ts-loader',
-                options: {
-                    configFile: 'tsconfig.web.json',
-                    transpileOnly: !isProduction // Skip type checking for dev builds.,
-                }
-            }, {
-                test: /\.html$/, // Target .html files
-                use: [
-                    {
-                        loader: 'html-loader', // This loader allows Webpack to handle HTML files
-                        options: {
-                            // Enable the loader to process SSI directives (HTML files with server-side includes)
-                            sources: false, // Optional: Disable processing of <img> and <source> tags
-                            minimize: false
+                use: {
+                    loader: 'builtin:swc-loader',
+                    options: {
+                        jsc: {
+                            parser: {
+                                syntax: 'typescript',
+                                tsx: true, // Enable if using TSX (React)
+                                decorators: true, // Enable if using decorators
+                                dynamicImport: true // Enable dynamic import syntax
+                            },
+                            transform: {
+                                react: {
+                                    runtime: 'automatic' // Use 'classic' if not using React 17+
+                                    // Add other React-specific options if needed
+                                }
+                            }
+
+                            // target: 'es2020' // Set your desired ECMAScript target
+                        },
+
+                        // You can include environment-specific configurations if needed
+                        env: {
+                            targets: {
+                                chrome: '120',
+                                firefox: '120',
+                                safari: '17'
+                            }
+                        },
+                        module: {
+                            type: 'es6' // Preserve ES6 module syntax for tree shaking
                         }
-                    }
-                ]
-            } ]
+
+                    // Optionally, specify a .swcrc file by omitting the options here
+                    // and creating a .swcrc file in your project root
+                    } } } ]
         },
         node: {
             // Allow the use of the real filename of the module being executed. By
@@ -201,31 +207,6 @@ function getConfig(options = {}) {
             sourceMapFilename: '[file].map'
         },
         plugins: [
-            detectCircularDeps
-                && new CircularDependencyPlugin({
-                    allowAsyncCycles: false,
-                    exclude: /node_modules/,
-                    failOnError: false
-                }),
-
-            new SSICompileWebpackPlugin({
-                publicPath: '',
-                localBaseDir: __dirname, // Base directory for local SSI files
-                minify: false, // Whether to minify the output
-                remoteBasePath: '' // Optional: Fetch SSI files from a remote URL
-                // variable: {
-                //     'QUERY_STRING': 'test=1' // Replace variables in SSI directives
-                // }
-            }),
-
-            new CopyWebpackPlugin({
-                patterns: [
-                    {
-                        from: `${__dirname}/index.html`, // Source: __dirname/index.html
-                        to: `${__dirname}/build/index.html` // Destination: __dirname/build
-                    }
-                ]
-            })
         ].filter(Boolean),
         resolve: {
             alias: {
@@ -316,15 +297,15 @@ module.exports = (_env, argv) => {
             plugins: [
                 ...config.plugins,
                 ...getBundleAnalyzerPlugin(analyzeBundle, 'app'),
-                new webpack.IgnorePlugin({
+                new rspack.IgnorePlugin({
                     resourceRegExp: /^canvas$/,
                     contextRegExp: /resemblejs$/
                 }),
-                new webpack.IgnorePlugin({
+                new rspack.IgnorePlugin({
                     resourceRegExp: /^\.\/locale$/,
                     contextRegExp: /moment$/
                 }),
-                new webpack.ProvidePlugin({
+                new rspack.ProvidePlugin({
                     process: 'process/browser'
                 })
             ],

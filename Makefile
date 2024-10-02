@@ -20,8 +20,8 @@ ifeq ($(OS),Windows_NT)
 	WEBPACK = .\node_modules\.bin\webpack
 	WEBPACK_DEV_SERVER = .\node_modules\.bin\webpack serve --mode development
 else
-	WEBPACK = ./node_modules/.bin/webpack
-	WEBPACK_DEV_SERVER = ./node_modules/.bin/webpack serve --mode development
+	WEBPACK = ./node_modules/.bin/rspack
+	WEBPACK_DEV_SERVER = ./node_modules/.bin/rspack serve --mode development
 endif
 
 all: compile deploy
@@ -29,6 +29,10 @@ all: compile deploy
 compile: clean
 	NODE_OPTIONS=--max-old-space-size=8192 \
 	$(WEBPACK)
+	node ./injectSSI.js . build
+
+create-html:
+	node ./injectSSI.js . build
 
 clean:
 	rm -fr $(BUILD_DIR)
