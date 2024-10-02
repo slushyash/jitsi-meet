@@ -135,7 +135,7 @@ export function constructOptions(state: IReduxState) {
     // WebSocket is preferred over BOSH.
     const serviceUrl = websocket || bosh;
 
-    logger.log(`Using service URL ${serviceUrl}`);
+    // logger.log(`Using service URL ${serviceUrl}`);
 
     // Append room to the URL's search.
     const { room } = state['features/base/conference'];
@@ -167,13 +167,13 @@ export function constructOptions(state: IReduxState) {
         };
     }
 
+    // @ts-ignore
     options.sso = {
         'ssoService': 'sso.8x8.com',
         'tokenService': 'api-vo.cloudflare.jitsi.net',
         'clientId': 'meetings_web_sso'
     };
 
-    options.websocketKeepAliveUrl = 'https://8x8.vc/vpaas-magic-cookie-06c2dc1fca26493997b0d2a00b9f3109/_unlock?room=7555df76-3862-4003-9b2c-941196b2b764';
     return options;
 }
 

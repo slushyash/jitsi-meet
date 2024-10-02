@@ -1,11 +1,14 @@
 /* global __dirname */
 
 const CircularDependencyPlugin = require('circular-dependency-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const fs = require('fs');
 const { join, resolve } = require('path');
 const process = require('process');
+const SSICompileWebpackPlugin = require('ssi-webpack5-plugin');
 const webpack = require('webpack');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+
 
 /**
  * The URL of the Jitsi Meet deployment to be proxy to in the context of
@@ -165,6 +168,18 @@ function getConfig(options = {}) {
                     configFile: 'tsconfig.web.json',
                     transpileOnly: !isProduction // Skip type checking for dev builds.,
                 }
+            }, {
+                test: /\.html$/, // Target .html files
+                use: [
+                    {
+                        loader: 'html-loader', // This loader allows Webpack to handle HTML files
+                        options: {
+                            // Enable the loader to process SSI directives (HTML files with server-side includes)
+                            sources: false, // Optional: Disable processing of <img> and <source> tags
+                            minimize: false
+                        }
+                    }
+                ]
             } ]
         },
         node: {
@@ -189,7 +204,26 @@ function getConfig(options = {}) {
                     allowAsyncCycles: false,
                     exclude: /node_modules/,
                     failOnError: false
-                })
+                }),
+
+            new SSICompileWebpackPlugin({
+                publicPath: '',
+                localBaseDir: __dirname, // Base directory for local SSI files
+                minify: false, // Whether to minify the output
+                remoteBasePath: '' // Optional: Fetch SSI files from a remote URL
+                // variable: {
+                //     'QUERY_STRING': 'test=1' // Replace variables in SSI directives
+                // }
+            }),
+
+            new CopyWebpackPlugin({
+                patterns: [
+                    {
+                        from: `${__dirname}/index.html`, // Source: __dirname/index.html
+                        to: `${__dirname}/build/index.html` // Destination: __dirname/build
+                    }
+                ]
+            })
         ].filter(Boolean),
         resolve: {
             alias: {
