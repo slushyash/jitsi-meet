@@ -22,7 +22,7 @@ if (subdomain.startsWith('<!--')) {
     subdomain = '';
 }
 
-var enableJaaS = false;
+var enableJaaS = true;
 
 var config = {
     // Connection
@@ -30,7 +30,7 @@ var config = {
 
     hosts: {
         // XMPP domain.
-        domain: 'jitsi-meet.example.com',
+        domain: '8x8.vc',
 
         // When using authentication, domain for guest users.
         // anonymousdomain: 'guest.example.com',
@@ -42,14 +42,15 @@ var config = {
         // focus: 'focus.jitsi-meet.example.com',
 
         // XMPP MUC domain. FIXME: use XEP-0030 to discover it.
-        muc: 'conference.' + subdomain + 'jitsi-meet.example.com',
+        muc: 'conference.8x8.vc',
+        'focus': 'focus.8x8.vc'
     },
 
     // BOSH URL. FIXME: use XEP-0156 to discover it.
-    bosh: 'https://jitsi-meet.example.com/' + subdir + 'http-bind',
+    bosh: 'https://8x8.vc/http-bind',
 
     // Websocket URL (XMPP)
-    // websocket: 'wss://jitsi-meet.example.com/' + subdir + 'xmpp-websocket',
+    websocket: 'wss://8x8.vc/xmpp-websocket',
 
     // Whether BOSH should be preferred over WebSocket if both are configured.
     // preferBosh: false,
@@ -119,7 +120,7 @@ var config = {
     // disableReactionsModeration: false,
 
     // Disables polls feature.
-    // disablePolls: false,
+    disablePolls: true,
 
     // Disables demote button from self-view
     // disableSelfDemote: false,
@@ -185,7 +186,7 @@ var config = {
     // startAudioOnly: false,
 
     // Every participant after the Nth will start audio muted.
-    // startAudioMuted: 10,
+    startAudioMuted: 25,
 
     // Start calls with audio muted. Unlike the option above, this one is only
     // applied locally. FIXME: having these 2 options is confusing.
@@ -252,23 +253,10 @@ var config = {
     //     disableRemoveRaisedHandOnFocus: false,
     // },
 
-    // speakerStats: {
-    //     // Specifies whether the speaker stats is enable or not.
-    //     disabled: false,
-
-    //     // Specifies whether there will be a search field in speaker stats or not.
-    //     disableSearch: false,
-
-    //     // Specifies whether participants in speaker stats should be ordered or not, and with what priority.
-    //     // 'role', <- Moderators on top.
-    //     // 'name', <- Alphabetically by name.
-    //     // 'hasLeft', <- The ones that have left in the bottom.
-    //     order: [
-    //         'role',
-    //         'name',
-    //         'hasLeft',
-    //     ],
-    // },
+    speakerStats: {
+        // Specifies whether the speaker stats is enable or not.
+        disabled: true,
+    },
 
     // DEPRECATED. Please use speakerStats.disableSearch instead.
     // Specifies whether there will be a search field in speaker stats or not
@@ -284,13 +272,26 @@ var config = {
 
     // How many participants while in the tile view mode, before the receiving video quality is reduced from HD to SD.
     // Use -1 to disable.
-    // maxFullResolutionParticipants: 2,
+    maxFullResolutionParticipants: -1,
 
     // w3c spec-compliant video constraints to use for video capture. Currently
     // used by browsers that return true from lib-jitsi-meet's
     // util#browser#usesNewGumFlow. The constraints are independent from
     // this config's resolution value. Defaults to requesting an ideal
     // resolution of 720p.
+    'constraints': {
+        'video': {
+            'height': { 'ideal': 720,
+                'max': 720,
+                'min': 180 },
+            'width': { 'ideal': 1280,
+                'max': 1280,
+                'min': 320 },
+            'frameRate': { 'max': 30,
+                'min': 15 }
+        }
+    },
+
     // constraints: {
     //     video: {
     //         height: {
@@ -305,7 +306,7 @@ var config = {
     // disableSimulcast: false,
 
     // Every participant after the Nth will start video muted.
-    // startVideoMuted: 10,
+    startVideoMuted: 25,
 
     // Start calls with video muted. Unlike the option above, this one is only
     // applied locally. FIXME: having these 2 options is confusing.
@@ -349,16 +350,18 @@ var config = {
     // },
 
     // configuration for all things recording related. Existing settings will be migrated here in the future.
-    // recordings: {
-    //    // IF true (default) recording audio and video is selected by default in the recording dialog.
-    //    // recordAudioAndVideo: true,
-    //    // If true, shows a notification at the start of the meeting with a call to action button
-    //    // to start recording (for users who can do so).
-    //    // suggestRecording: true,
-    //    // If true, shows a warning label in the prejoin screen to point out the possibility that
-    //    // the call you're joining might be recorded.
-    //    // showPrejoinWarning: true,
-    // },
+    recordings: {
+        // IF true (default) recording audio and video is selected by default in the recording dialog.
+        recordAudioAndVideo: false,
+
+        // If true, shows a notification at the start of the meeting with a call to action button
+        // to start recording (for users who can do so).
+        suggestRecording: false,
+
+        // If true, shows a warning label in the prejoin screen to point out the possibility that
+        // the call you're joining might be recorded.
+        showPrejoinWarning: false,
+    },
 
     // recordingService: {
     //     // When integrations like dropbox are enabled only that will be shown,
@@ -383,16 +386,16 @@ var config = {
     // fileRecordingsServiceSharingEnabled: false,
 
     // Local recording configuration.
-    // localRecording: {
-    //     // Whether to disable local recording or not.
-    //     disable: false,
+    localRecording: {
+        // Whether to disable local recording or not.
+        disable: true,
 
-    //     // Whether to notify all participants when a participant is recording locally.
-    //     notifyAllParticipants: false,
+        // Whether to notify all participants when a participant is recording locally.
+        notifyAllParticipants: true,
 
-    //     // Whether to disable the self recording feature (only local participant streams).
-    //     disableSelfRecording: false,
-    // },
+        // Whether to disable the self recording feature (only local participant streams).
+        disableSelfRecording: true,
+    },
 
     // Customize the Live Streaming dialog. Can be modified for a non-YouTube provider.
     // liveStreaming: {
@@ -640,7 +643,7 @@ var config = {
     // Use TURN/UDP servers for the jitsi-videobridge connection (by default
     // we filter out TURN/UDP because it is usually not needed since the
     // bridge itself is reachable via UDP)
-    // useTurnUdp: false
+    useTurnUdp: true,
 
     // Enable support for encoded transform in supported browsers. This allows
     // E2EE to work in Safari if the corresponding flag is enabled in the browser.
@@ -714,7 +717,7 @@ var config = {
 
     // Enabling the close page will ignore the welcome page redirection when
     // a call is hangup.
-    // enableClosePage: false,
+    enableClosePage: true,
 
     // Disable hiding of remote thumbnails when in a 1-on-1 conference call.
     // Setting this to null, will also disable showing the remote videos
@@ -1033,7 +1036,7 @@ var config = {
 
     // Controls the percentage of automatic feedback shown to participants.
     // The default value is 100%. If set to 0, no automatic feedback will be requested
-    // feedbackPercentage: 100,
+    feedbackPercentage: 0,
 
     // Privacy
     //
@@ -1066,7 +1069,8 @@ var config = {
 
         // Provides a way to set the codec preference on mobile devices, both on RN and mobile browser based
         // endpoints.
-        // mobileCodecPreferenceOrder: [ 'H264', 'VP8', 'VP9' ],
+        mobileCodecPreferenceOrder: [ 'VP8', 'H264', 'VP9' ],
+
         //
         // Provides a way to set the codec preference on desktop based endpoints.
         // codecPreferenceOrder: [ 'VP9', 'VP8', 'H264 ],
@@ -1463,14 +1467,16 @@ var config = {
     // },
 
     // Options related to the breakout rooms feature.
-    // breakoutRooms: {
-    //     // Hides the add breakout room button. This replaces `hideAddRoomButton`.
-    //     hideAddRoomButton: false,
-    //     // Hides the auto assign participants button.
-    //     hideAutoAssignButton: false,
-    //     // Hides the join breakout room button.
-    //     hideJoinRoomButton: false,
-    // },
+    breakoutRooms: {
+        // Hides the add breakout room button. This replaces `hideAddRoomButton`.
+        hideAddRoomButton: true,
+
+        // Hides the auto assign participants button.
+        hideAutoAssignButton: true,
+
+        // Hides the join breakout room button.
+        hideJoinRoomButton: true,
+    },
 
     // When true, virtual background feature will be disabled.
     // disableVirtualBackground: false,
@@ -1480,7 +1486,7 @@ var config = {
     // disableAddingBackgroundImages: false,
 
     // Sets the background transparency level. '0' is fully transparent, '1' is opaque.
-    // backgroundAlpha: 1,
+    backgroundAlpha: 0,
 
     // The URL of the moderated rooms microservice, if available. If it
     // is present, a link to the service will be rendered on the welcome page,
@@ -1513,10 +1519,10 @@ var config = {
     // },
 
     // Hides the conference subject
-    // hideConferenceSubject: false,
+    hideConferenceSubject: true,
 
     // Hides the conference timer.
-    // hideConferenceTimer: false,
+    hideConferenceTimer: true,
 
     // Hides the recording label
     // hideRecordingLabel: false,
@@ -1609,6 +1615,7 @@ var config = {
      * can become https://brandedDomain/roomAlias)
      */
     // brandingRoomAlias: null,
+    'desktopSharingSources': [ 'screen', 'window' ],
 
     // List of undocumented settings used in lib-jitsi-meet
     /**
@@ -1796,21 +1803,13 @@ var config = {
     // },
 
     // Application logo url
-    // defaultLogoUrl: 'images/watermark.svg',
+    defaultLogoUrl: '',
 
     // Settings for the Excalidraw whiteboard integration.
-    // whiteboard: {
-    //     // Whether the feature is enabled or not.
-    //     enabled: true,
-    //     // The server used to support whiteboard collaboration.
-    //     // https://github.com/jitsi/excalidraw-backend
-    //     collabServerBaseUrl: 'https://excalidraw-backend.example.com',
-    //     // The user access limit to the whiteboard, introduced as a means
-    //     // to control the performance.
-    //     userLimit: 25,
-    //     // The url for more info about the whiteboard and its usage limitations.
-    //     limitUrl: 'https://example.com/blog/whiteboard-limits',
-    // },
+    whiteboard: {
+        // Whether the feature is enabled or not.
+        enabled: false
+    },
 
     // The watchRTC initialize config params as described :
     // https://testrtc.com/docs/installing-the-watchrtc-javascript-sdk/#h-set-up-the-sdk
